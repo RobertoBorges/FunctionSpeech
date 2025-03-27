@@ -16,11 +16,13 @@ SPEECH_TO_TEXT_ENDPOINT = os.environ.get("SPEECH_TO_TEXT_ENDPOINT", "https://.ap
 TRANSCRIPTION_OUTPUT_CONTAINER = os.environ.get("TRANSCRIPTION_OUTPUT_CONTAINER", "transcribed")
 SA_OUTPUT_SAS = os.environ.get("SA_OUTPUT_SAS")
 OPENAI_COMPLETIONS_ENDPOINT = os.environ.get("OPENAI_COMPLETIONS_ENDPOINT", "")
+OPENAI_COMPLETIONS_MODEL = os.environ.get("OPENAI_COMPLETIONS_MODEL")
 COMPLETIONS_SUBSCRIPTION_KEY = os.environ.get("COMPLETIONS_SUBSCRIPTION_KEY", "")
 LANGUAGE_SUBSCRIPTION_KEY = os.environ.get("LANGUAGE_SUBSCRIPTION_KEY")
 LANGUAGE_ENDPOINT = os.environ.get("LANGUAGE_ENDPOINT", "")
 OUTPUT_REDACTED_CONTAINER = os.environ.get("OUTPUT_REDACTED_CONTAINER", "redacted")
 REDACTED_STORAGE_ACCOUNT_NAME = os.environ.get("REDACTED_STORAGE_ACCOUNT_NAME")
+
 
 # Create a single credential object to be reused
 credential = DefaultAzureCredential()
@@ -77,10 +79,10 @@ def agent_detection(text):
     token = credential.get_token("https://cognitiveservices.azure.com/.default").token
     
     # Build the URL for the OpenAI endpoint
-    base_url = f"{OPENAI_COMPLETIONS_ENDPOINT}/openai/deployments/o3-mini/chat/completions?api-version=2025-01-01-preview"
+    base_url = f"{OPENAI_COMPLETIONS_ENDPOINT}/openai/deployments/{OPENAI_COMPLETIONS_MODEL}/chat/completions?api-version=2025-01-01-preview"
     headers = {
         "Content-Type": "application/json", 
-        "api-key": COMPLETIONS_SUBSCRIPTION_KEY
+        "Authorization": f"Bearer {token}"
     }
     
     parsed_url = urllib.parse.urlparse(base_url)
