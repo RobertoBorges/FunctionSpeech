@@ -21,6 +21,9 @@ LANGUAGE_ENDPOINT = os.environ.get("LANGUAGE_ENDPOINT", "")
 OUTPUT_REDACTED_CONTAINER = os.environ.get("OUTPUT_REDACTED_CONTAINER", "redacted")
 REDACTED_STORAGE_ACCOUNT_NAME = os.environ.get("REDACTED_STORAGE_ACCOUNT_NAME")
 
+# Create a single credential object to be reused
+credential = DefaultAzureCredential()
+
 def run_transcription():
     # Validate required environment variables
     if not STORAGE_ACCOUNT_NAME:
@@ -58,9 +61,6 @@ def run_transcription():
     result = json.loads(response.read().decode())
     conn.close()
     return result
-
-# Create a single credential object to be reused
-credential = DefaultAzureCredential()
 
 def agent_detection(text):
     body = {
