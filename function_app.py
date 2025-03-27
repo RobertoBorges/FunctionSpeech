@@ -18,7 +18,7 @@ OPENAI_COMPLETIONS_ENDPOINT = os.environ.get("OPENAI_COMPLETIONS_ENDPOINT", "")
 COMPLETIONS_SUBSCRIPTION_KEY = os.environ.get("COMPLETIONS_SUBSCRIPTION_KEY", "")
 LANGUAGE_SUBSCRIPTION_KEY = os.environ.get("LANGUAGE_SUBSCRIPTION_KEY")
 LANGUAGE_ENDPOINT = os.environ.get("LANGUAGE_ENDPOINT", "")
-OUTPUT_REDACTED_CONTAINER = os.environ.get("OUTPUT_CONTAINER", "redacted")
+OUTPUT_REDACTED_CONTAINER = os.environ.get("OUTPUT_REDACTED_CONTAINER", "redacted")
 
 def run_transcription():
     # Validate required environment variables
