@@ -19,6 +19,7 @@ COMPLETIONS_SUBSCRIPTION_KEY = os.environ.get("COMPLETIONS_SUBSCRIPTION_KEY", ""
 LANGUAGE_SUBSCRIPTION_KEY = os.environ.get("LANGUAGE_SUBSCRIPTION_KEY")
 LANGUAGE_ENDPOINT = os.environ.get("LANGUAGE_ENDPOINT", "")
 OUTPUT_REDACTED_CONTAINER = os.environ.get("OUTPUT_REDACTED_CONTAINER", "redacted")
+REDACTED_STORAGE_ACCOUNT_NAME = os.environ.get("REDACTED_STORAGE_ACCOUNT_NAME")
 
 def run_transcription():
     # Validate required environment variables
@@ -194,7 +195,7 @@ def Redact_Transcription(myblob: func.InputStream):
     
     # Create a connection to the Azure Storage account using managed identity
     blob_service_client = BlobServiceClient(
-        account_url=f"https://{STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
+        account_url=f"https://{REDACTED_STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
         credential=credential
     )
     
