@@ -6,7 +6,8 @@ import urllib.parse
 import os
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from azure.identity import DefaultAzureCredential
-
+import azurefunctions.extensions.bindings.blob as myblob
+ 
 # Load configuration from environment variables
 RECORDINGS_CONTAINER = os.environ.get("RECORDINGS_CONTAINER", "raw")
 STORAGE_ACCOUNT_NAME = os.environ.get("STORAGE_ACCOUNT_NAME")
