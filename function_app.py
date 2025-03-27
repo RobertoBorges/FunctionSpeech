@@ -4,7 +4,6 @@ import json
 import http.client
 import urllib.parse
 import os
-import isodate
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from azure.identity import DefaultAzureCredential
 
@@ -173,8 +172,8 @@ def Redact_Transcription(myblob: func.InputStream):
     
     output = []
     for phase in blob_content['recognizedPhrases']:
-        start = isodate.parse_duration(phase['offset']).total_seconds()
-        end = isodate.parse_duration(phase['duration']).total_seconds()
+        start = phase['offset']
+        end = phase['duration']
         speaker = str(phase['speaker'])
         text = phase['nBest'][0]['itn']
         redacted_text = redact_text(text)['results']['documents'][0]['redactedText']
