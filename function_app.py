@@ -158,7 +158,7 @@ def Voice_To_Text_To_Speech(req: func.HttpRequest) -> func.HttpResponse:
     )
 
 @app.blob_trigger(arg_name="myblob", path="transcribed",
-                               connection="AzureWebJobsStorage") 
+                               connection="IngestAccount") 
 def Redact_Transcription(myblob: func.InputStream):
     logging.info(f"Python blob trigger function processed blob "
                  f"Name: {myblob.name} "
