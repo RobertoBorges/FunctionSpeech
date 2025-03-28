@@ -56,14 +56,15 @@ def run_transcription():
             }
         },
     }
-    parsed_url = urllib.parse.urlparse(f"{SPEECH_TO_TEXT_ENDPOINT}/speechtotext/v3.2/transcriptions")
+    base_url = f"{SPEECH_TO_TEXT_ENDPOINT}/speechtotext/v3.2/transcriptions"
+    parsed_url = urllib.parse.urlparse(base_url)
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)
-    conn.request("POST", parsed_url, body_str, headers)
+    conn.request("POST", base_url, body_str, headers)
     response = conn.getresponse()
     status_code = response.status 
     if status_code != 200:
-        logging.error(f"Speech to Text API request failed with status code {status_code}, URL {parsed_url}")
+        logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
         logging.error(f"Response body: {response.read().decode()}")
     conn.close()
     result = json.loads(response.read().decode())

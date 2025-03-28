@@ -1,14 +1,14 @@
-POST https://region.api.cognitive.microsoft.com/speechtotext/transcriptions:submit?api-version=2024-11-15
-Ocp-Apim-Subscription-Key: your-speech-service-key
+POST https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/
+Ocp-Apim-Subscription-Key: 7cguxqsRWHtwh1P0IAsSlYzTK5dSdhSNsePTqxblqOQUsOtL50YbJQQJ99BCACYeBjFXJ3w3AAAYACOG2C0A
 Content-Type: application/json
 
 {
-"contentContainerUrl": "URL_STORAGE_ACCOUNT_SOURCE",
+"contentContainerUrl": "texttospeachrga4da.blob.core.windows.net/",
         "locale": "en-CA",
         "displayName": "My Transcription",
         "properties": {
             "diarizationEnabled": "True",
-            "destinationContainerUrl": "URL_STORAGE_ACCOUNT_RESULTS?YOUR_SAS_STORAGE_TOKEN",
+            "destinationContainerUrl": "http://test.com?wdifhisdf",
             "wordLevelTimestampsEnabled": "True",
             "timeToLiveHours": "48"
 
@@ -17,6 +17,17 @@ Content-Type: application/json
 
 ###
 
-GET https://region.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/GUID_FROM_PREVIOUS_STEP
-Ocp-Apim-Subscription-Key: your-speech-service-key
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/3e11ec9a-f7dd-47b0-868c-af10e3171b98
+Ocp-Apim-Subscription-Key: 7cguxqsRWHtwh1P0IAsSlYzTK5dSdhSNsePTqxblqOQUsOtL50YbJQQJ99BCACYeBjFXJ3w3AAAYACOG2C0A
+Content-Type: application/json
+###
+
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/5a2b4c39-0a38-49f9-8ecc-17a7983cf573/files
+Ocp-Apim-Subscription-Key: 7cguxqsRWHtwh1P0IAsSlYzTK5dSdhSNsePTqxblqOQUsOtL50YbJQQJ99BCACYeBjFXJ3w3AAAYACOG2C0A
+Content-Type: application/json
+
+###
+
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/5a2b4c39-0a38-49f9-8ecc-17a7983cf573/files/70eba13c-3184-4795-9333-b952576624fc
+Ocp-Apim-Subscription-Key: 7cguxqsRWHtwh1P0IAsSlYzTK5dSdhSNsePTqxblqOQUsOtL50YbJQQJ99BCACYeBjFXJ3w3AAAYACOG2C0A
 Content-Type: application/json
