@@ -10,9 +10,9 @@ import azurefunctions.extensions.bindings.blob as myblob
  
 # Load configuration from environment variables
 RECORDINGS_CONTAINER = os.environ.get("RECORDINGS_CONTAINER", "raw")
-STORAGE_ACCOUNT_NAME = os.environ.get("STORAGE_ACCOUNT_NAME")
+RECORDINGS_STORAGE_ACCOUNT_NAME = os.environ.get("RECORDINGS_STORAGE_ACCOUNT_NAME")
 SPEECH_SUBSCRIPTION_KEY = os.environ.get("SPEECH_SUBSCRIPTION_KEY")
-SPEECH_TO_TEXT_ENDPOINT = os.environ.get("SPEECH_TO_TEXT_ENDPOINT", "https://.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions")
+SPEECH_TO_TEXT_ENDPOINT = os.environ.get("SPEECH_TO_TEXT_ENDPOINT", "https://eastus.api.cognitive.microsoft.com")
 TRANSCRIPTION_OUTPUT_CONTAINER = os.environ.get("TRANSCRIPTION_OUTPUT_CONTAINER", "transcribed")
 SA_OUTPUT_SAS = os.environ.get("SA_OUTPUT_SAS")
 OPENAI_COMPLETIONS_ENDPOINT = os.environ.get("OPENAI_COMPLETIONS_ENDPOINT", "")
@@ -29,9 +29,9 @@ credential = DefaultAzureCredential()
 
 def run_transcription():
     # Validate required environment variables
-    if not STORAGE_ACCOUNT_NAME:
-        logging.error("STORAGE_ACCOUNT_NAME environment variable is not set")
-        raise ValueError("STORAGE_ACCOUNT_NAME environment variable is required")
+    if not RECORDINGS_STORAGE_ACCOUNT_NAME:
+        logging.error("RECORDINGS_STORAGE_ACCOUNT_NAME environment variable is not set")
+        raise ValueError("RECORDINGS_STORAGE_ACCOUNT_NAME environment variable is required")
     if not SPEECH_SUBSCRIPTION_KEY:
         logging.error("SPEECH_SUBSCRIPTION_KEY environment variable is not set")
         raise ValueError("SPEECH_SUBSCRIPTION_KEY environment variable is required")
@@ -44,25 +44,29 @@ def run_transcription():
         "Content-Type": "application/json"
     }
     body = {
-        "contentContainerUrl": f"https://{STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{RECORDINGS_CONTAINER}",
+        "contentContainerUrl": f"https://{RECORDINGS_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{RECORDINGS_CONTAINER}",
         "locale": "en-CA",
         "displayName": f"Transcription of audio files in {RECORDINGS_CONTAINER}",
         "properties": {
             "diarizationEnabled": True,
-            "destinationContainerUrl": f"https://{STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{TRANSCRIPTION_OUTPUT_CONTAINER}?{SA_OUTPUT_SAS}",
+            "destinationContainerUrl": f"https://{RECORDINGS_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{TRANSCRIPTION_OUTPUT_CONTAINER}?{SA_OUTPUT_SAS}",
             "wordLevelTimestampsEnabled": True,
             "languageIdentification": {
                 "candidateLocales": ["en-CA", "fr-CA"]
             }
         },
     }
-    parsed_url = urllib.parse.urlparse(SPEECH_TO_TEXT_ENDPOINT)
+    parsed_url = urllib.parse.urlparse(f"{SPEECH_TO_TEXT_ENDPOINT}/speechtotext/v3.2/transcriptions")
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)
-    conn.request("POST", parsed_url.path, body_str, headers)
+    conn.request("POST", parsed_url, body_str, headers)
     response = conn.getresponse()
-    result = json.loads(response.read().decode())
+    status_code = response.status 
+    if status_code != 200:
+        logging.error(f"Speech to Text API request failed with status code {status_code}, URL {parsed_url}")
+        logging.error(f"Response body: {response.read().decode()}")
     conn.close()
+    result = json.loads(response.read().decode())
     return result
 
 def agent_detection(text):
@@ -90,9 +94,12 @@ def agent_detection(text):
     body_str = json.dumps(body)
     conn.request("POST", parsed_url.path + "?" + parsed_url.query, body_str, headers)
     response = conn.getresponse()
-    result = json.loads(response.read().decode())
+    status_code = response.status
+    if status_code != 200:
+        logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
+        logging.error(f"Response body: {response.read().decode()}")
     conn.close()
-    
+    result = json.loads(response.read().decode())
     return result["choices"][0]["message"]["content"]
 
 def redact_text(text):
@@ -127,9 +134,13 @@ def redact_text(text):
     body_str = json.dumps(body)
     conn.request("POST", parsed_url.path + "?" + parsed_url.query, body_str, pii_headers)
     response = conn.getresponse()
-    result = json.loads(response.read().decode())
+    status_code = response.status
+    status_code = response.status 
+    if status_code != 200:
+        logging.error(f"Speech to Text API request failed with status code {status_code}, URL {parsed_url}")
+        logging.error(f"Response body: {response.read().decode()}")
     conn.close()
-    
+    result = json.loads(response.read().decode())
     return result
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
