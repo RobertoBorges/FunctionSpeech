@@ -39,7 +39,7 @@ OUTPUT_REDACTED_CONTAINER = "BLOB CONTAINER NAME WHERE THE REDACTED JSON WILL BE
 
 ## Additional Environment Variables
 
-The following environment variables are required for the Azure Function App to run properly using managed identity with connection strings on the storage accounts:
+The following environment variables are required for the Azure Function App to run properly using managed identity without connection strings on the storage accounts:
 
 ```text
 AzureWebJobsStorage__accountName = "STORAGE ACCOUNT NAME WITHOUT .blob.core.windows.net"
