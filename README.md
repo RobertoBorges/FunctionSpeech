@@ -4,6 +4,8 @@ This is a Python Azure Function that convert audio files from Azure Blob Storage
 
 Then the results are sent to OpenAI for redaction and the redacted results are stored in Azure Blob Storage.
 
+![Audio transcription/redact](docs/architecture.png)
+
 ## Prerequisites
 
 - Python 3.11.9 or later
