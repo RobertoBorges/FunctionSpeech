@@ -39,8 +39,8 @@ The following environment variables are required for the Azure Function App to r
 
 AzureWebJobsStorage__accountName = "STORAGE ACCOUNT NAME WITHOUT .blob.core.windows.net"
 AzureWebJobsStorage__credential = "managedidentity" #exactly as it is
-SCM_DO_BUILD_DURING_DEPLOYMENT = "1" # This is required to run the function in Azure Function App
 IngestAccount__blobServiceUri = "https://YOUR_STORAGE_ACCOUNT_NAME.blob.core.windows.net" # This is the storage account used by the function itself, the name IngestAccount is the connection string name used in the code
+SCM_DO_BUILD_DURING_DEPLOYMENT = "1" # This is required to run the function in Azure Function App
 ENABLE_ORYX_BUILD = "true" # This is required to run the function in Azure Function App
 FUNCTIONS_WORKER_RUNTIME = "python" # This is required to run the function in Azure Function App
 BUILD_FLAGS = "UseExpressBuild"
