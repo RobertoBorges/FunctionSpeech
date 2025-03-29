@@ -63,11 +63,11 @@ def run_transcription():
     conn.request("POST", base_url, body_str, headers)
     response = conn.getresponse()
     status_code = response.status 
-    if status_code != 200:
+    if status_code > 299:
         logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
         logging.error(f"Response body: {response.read().decode()}")
-    conn.close()
     result = json.loads(response.read().decode())
+    conn.close()
     return result
 
 def agent_detection(text):
@@ -96,11 +96,11 @@ def agent_detection(text):
     conn.request("POST", parsed_url.path + "?" + parsed_url.query, body_str, headers)
     response = conn.getresponse()
     status_code = response.status
-    if status_code != 200:
+    if status_code > 299:
         logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
         logging.error(f"Response body: {response.read().decode()}")
-    conn.close()
     result = json.loads(response.read().decode())
+    conn.close()
     return result["choices"][0]["message"]["content"]
 
 def redact_text(text):
@@ -137,11 +137,11 @@ def redact_text(text):
     response = conn.getresponse()
     status_code = response.status
     status_code = response.status 
-    if status_code != 200:
+    if status_code > 299:
         logging.error(f"Speech to Text API request failed with status code {status_code}, URL {parsed_url}")
         logging.error(f"Response body: {response.read().decode()}")
-    conn.close()
     result = json.loads(response.read().decode())
+    conn.close()
     return result
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
