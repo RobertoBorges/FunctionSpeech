@@ -18,12 +18,12 @@ Content-Type: application/json
 ###
 
 GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/1addeb61-14df-4f63-9547-43be55ee71db
-Ocp-Apim-Subscription-Key: 9rOgoEwYuvgLrifxJNfqzq393YefplxZS27KncGURtozpOqESZgcJQQJ99BCACYeBjFXJ3w3AAAYACOGJQrf
+Ocp-Apim-Subscription-Key: your-speech-service-key
 Content-Type: application/json
 ###
 
-GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/1addeb61-14df-4f63-9547-43be55ee71db/files
-Ocp-Apim-Subscription-Key: 9rOgoEwYuvgLrifxJNfqzq393YefplxZS27KncGURtozpOqESZgcJQQJ99BCACYeBjFXJ3w3AAAYACOGJQrf
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/5a2b4c39-0a38-49f9-8ecc-17a7983cf573/files
+Ocp-Apim-Subscription-Key: your-speech-service-key
 Content-Type: application/json
 
 ###
