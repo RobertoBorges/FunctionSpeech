@@ -225,7 +225,7 @@ def Redact_Transcription(myblob: func.InputStream):
     }
 
     ind = 1
-    total_str = ''
+    output_f = ''
     agent = output['agent']
     
     for each_line in output['transcription']:
@@ -233,12 +233,9 @@ def Redact_Transcription(myblob: func.InputStream):
             front_text = 'Agent: '
         else:
             front_text = 'Speaker ' + str(each_line['Speaker']) + ': '
-        total_str = total_str + str(ind) + '\n' + each_line['Start_in_seconds'] + ' --> ' + each_line['End_in_seconds'] + '\n' + front_text + each_line['Redacted_Text'] + '\n\n'
+        output_f = output_f + str(ind) + '\n' + each_line['Start_in_seconds'] + ' --> ' + each_line['End_in_seconds'] + '\n' + front_text + each_line['Redacted_Text'] + '\n\n'
         ind = ind + 1
- 
-    # Convert output to io
-    output_f = io.StringIO(total_str)
-    
+     
     # Create a connection to the Azure Storage account using managed identity
     blob_service_client = BlobServiceClient(
         account_url=f"https://{REDACTED_STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
@@ -264,7 +261,8 @@ def Redact_Transcription(myblob: func.InputStream):
     blob_client = container_client.get_blob_client(output_blob_name)
     blob_client.upload_blob(
         output_f, 
-        overwrite=True
+        overwrite=True,
+        content_settings=ContentSettings(content_type="text/plain")
     )
     
     logging.info(f"Output SRT saved to blob storage: {OUTPUT_REDACTED_CONTAINER}/{output_blob_name}")
