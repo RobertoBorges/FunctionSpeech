@@ -1,9 +1,12 @@
 import azure.functions as func
 import logging
 import json
+import isodate
 import http.client
 import urllib.parse
 import os
+import io
+import datetime
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from azure.identity import DefaultAzureCredential
 import azurefunctions.extensions.bindings.blob as myblob
@@ -144,28 +147,31 @@ def redact_text(text):
     conn.close()
     return result
 
-app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="Voice_To_Text_To_Speech")
 def Voice_To_Text_To_Speech(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Processing HTTP trigger for Voice_To_Text_To_Speech.')
 
     transcription_result = run_transcription()
+    
 
     # Safely extract 'self' and 'links' with default values
     self_val = transcription_result.get("self", "N/A")
     links_val = transcription_result.get("links", "N/A")
+    status_val = transcription_result.get("status", "N/A")
     
     if self_val == "N/A" or links_val == "N/A":
         logging.warning("Missing one or more expected properties: 'self' or 'links' not found in transcription result.")
 
     logging.info(f"self: {self_val}")
     logging.info(f"links: {links_val}")
-
+    logging.info(f"status: {status_val}")
     response_body = (
         "Transcription request processed successfully.\n"
         f"self: {self_val}\n"
         f"links: {links_val}"
+        f"status: {status_val}\n"
     )
     return func.HttpResponse(
         response_body,
@@ -188,16 +194,17 @@ def Redact_Transcription(myblob: func.InputStream):
     
     output = []
     for phase in blob_content['recognizedPhrases']:
-        start = phase['offset']
-        end = phase['duration']
+        start = isodate.parse_duration(phase['offset']).total_seconds()
+        end = start + isodate.parse_duration(phase['duration']).total_seconds()
         speaker = str(phase['speaker'])
         text = phase['nBest'][0]['itn']
         redacted_text = redact_text(text)['results']['documents'][0]['redactedText']
+        redacted_text = ''.join("*" if c.isdigit() else c for c in redacted_text)
         each = output.append({
-            'Start_in_seconds': start,
-            'End_in_seconds': end,
-            'Text':  f"Speaker {speaker}: " + text,
-            'Redacted_Text': f"Speaker {speaker}: " + redacted_text
+            'Start_in_seconds': str(datetime.timedelta(seconds=start)),
+            'End_in_seconds': str(datetime.timedelta(seconds=end)),
+            'Speaker': speaker,
+            'Redacted_Text': redacted_text
         })
 
     output = {
@@ -205,8 +212,20 @@ def Redact_Transcription(myblob: func.InputStream):
         'transcription': output
     }
 
-    # Convert output to JSON string
-    output_json = json.dumps(output)
+    ind = 1
+    total_str = ''
+    agent = output['agent']
+    
+    for each_line in output['transcription']:
+        if each_line['Speaker'] == agent:
+            front_text = 'Agent: '
+        else:
+            front_text = 'Speaker ' + str(each_line['Speaker']) + ': '
+        total_str = total_str + str(ind) + '\n' + each_line['Start_in_seconds'] + ' --> ' + each_line['End_in_seconds'] + '\n' + front_text + each_line['Redacted_Text'] + '\n\n'
+        ind = ind + 1
+ 
+    # Convert output to io
+    output_f = io.StringIO(total_str)
     
     # Create a connection to the Azure Storage account using managed identity
     blob_service_client = BlobServiceClient(
@@ -218,23 +237,22 @@ def Redact_Transcription(myblob: func.InputStream):
     container_client = blob_service_client.get_container_client(OUTPUT_REDACTED_CONTAINER)
     
     # Preserve the folder structure from the source path
-    # The blob trigger returns the path including the container name (e.g., "transcribed/folder1/file.json")
+    # The blob trigger returns the path including the container name (e.g., "transcribed/folder1/file.srt")
     # We need to extract the relative path without the container name
     input_blob_path = myblob.name
     # Remove the container name and leading slash if present
     relative_path = "/".join(input_blob_path.split("/")[1:]) if "/" in input_blob_path else input_blob_path
     
-    # Create output blob name preserving folder structure but changing extension to _processed.json
+    # Create output blob name preserving folder structure but changing extension to _processed.srt
     filename = os.path.basename(relative_path)
     directory = os.path.dirname(relative_path)
-    output_blob_name = os.path.join(directory, os.path.splitext(filename)[0] + "_processed.json")
+    output_blob_name = os.path.join(directory, os.path.splitext(filename)[0] + "_processed.srt")
     
-    # Upload the JSON data to blob storage
+    # Upload the srt data to blob storage
     blob_client = container_client.get_blob_client(output_blob_name)
     blob_client.upload_blob(
-        output_json, 
-        overwrite=True,
-        content_settings=ContentSettings(content_type="application/json")
+        output_f, 
+        overwrite=True
     )
     
-    logging.info(f"Output JSON saved to blob storage: {OUTPUT_REDACTED_CONTAINER}/{output_blob_name}")
+    logging.info(f"Output SRT saved to blob storage: {OUTPUT_REDACTED_CONTAINER}/{output_blob_name}")
