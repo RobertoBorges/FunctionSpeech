@@ -64,7 +64,11 @@ def run_transcription():
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)
     conn.request("POST", base_url, body_str, headers)
-    response = conn.getresponse()
+    try:
+        response = conn.getresponse()
+    except Exception as e:
+        logging.error(f"Error getting response from Speech to Text API: {str(e)}")
+        raise
     status_code = response.status 
     if status_code > 299:
         logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
@@ -97,7 +101,11 @@ def agent_detection(text):
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)
     conn.request("POST", parsed_url.path + "?" + parsed_url.query, body_str, headers)
-    response = conn.getresponse()
+    try:
+        response = conn.getresponse()
+    except Exception as e:
+        logging.error(f"Error getting response from OpenAI API: {str(e)}")
+        raise
     status_code = response.status
     if status_code > 299:
         logging.error(f"Speech to Text API request failed with status code {status_code}, URL {base_url}")
@@ -137,7 +145,11 @@ def redact_text(text):
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)
     conn.request("POST", parsed_url.path + "?" + parsed_url.query, body_str, pii_headers)
-    response = conn.getresponse()
+    try:
+        response = conn.getresponse()
+    except Exception as e:
+        logging.error(f"Error getting response from Language API: {str(e)}")
+        raise
     status_code = response.status
     status_code = response.status 
     if status_code > 299:
