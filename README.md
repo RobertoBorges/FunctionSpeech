@@ -50,3 +50,14 @@ ENABLE_ORYX_BUILD = "true" # This is required to run the function in Azure Funct
 FUNCTIONS_WORKER_RUNTIME = "python" # This is required to run the function in Azure Function App
 BUILD_FLAGS = "UseExpressBuild"
 ```
+
+## Permissions
+
+The function needs to have the following permissions on the storage accounts:
+- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code)
+- `Storage Blob Data Owner` on the storage account used by the function itself (IngestAccount in the code)
+- `Cognitive Services OpenAI Contributor` on the OpenAI service used for redaction (Completions in the code)
+- `Cognitive Services User` on the OpenAI service used for redaction (Completions in the code)
+
+The Speech Service needs to have the following permissions on the storage account used by the function itself (IngestAccount in the code):
+- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code)
