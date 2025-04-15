@@ -1,0 +1,33 @@
+POST https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions
+Ocp-Apim-Subscription-Key: 6kMeIEHLBeHZcYzweNqqWet8gWcKUN8BNjMcMPZpdvbXOmOVd8O7JQQJ99BDACYeBjFXJ3w3AAAYACOGGO6d
+Content-Type: application/json
+
+{
+"contentContainerUrl": "https://functionmsirg8166.blob.core.windows.net/raw",
+        "locale": "en-CA",
+        "displayName": "My Transcription",
+        "properties": {
+            "diarizationEnabled": "True",
+            "destinationContainerUrl": "https://functionmsirg8166.blob.core.windows.net/transcribed?sp=racwl&st=2025-04-14T15:14:47Z&se=2026-05-31T23:14:47Z&spr=https&sv=2024-11-04&sr=c&sig=7D7e%2BbRM784JAlPCx3FH6ipwniA8DusnyEkm8Fe4sVk%3D",
+            "wordLevelTimestampsEnabled": "True",
+            "timeToLiveHours": "48"
+
+        }
+}
+
+###
+
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/1bbb6907-08ca-4fb4-b829-29a7dd26c94c
+Ocp-Apim-Subscription-Key: 6kMeIEHLBeHZcYzweNqqWet8gWcKUN8BNjMcMPZpdvbXOmOVd8O7JQQJ99BDACYeBjFXJ3w3AAAYACOGGO6d
+Content-Type: application/json
+###
+
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/293e81e7-cda4-4042-b19e-034ec0d72547/files
+Ocp-Apim-Subscription-Key: 6kMeIEHLBeHZcYzweNqqWet8gWcKUN8BNjMcMPZpdvbXOmOVd8O7JQQJ99BDACYeBjFXJ3w3AAAYACOGGO6d
+Content-Type: application/json
+
+###
+
+GET https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2/transcriptions/5a2b4c39-0a38-49f9-8ecc-17a7983cf573/files/70eba13c-3184-4795-9333-b952576624fc
+Ocp-Apim-Subscription-Key: your-speech-service-key
+Content-Type: application/json
