@@ -16,9 +16,6 @@ param storageAccountSku string = 'Standard_LRS'
 @description('App Service Plan SKU')
 param appServicePlanSku string = 'Y1' // Consumption plan
 
-@description('Storage account name for recordings')
-param recordingsStorageName string
-
 @description('Container name for audio files')
 param recordingsContainer string = 'audio-recordings'
 
@@ -53,9 +50,6 @@ param languageSubscriptionKey string
 @description('Language service endpoint')
 param languageEndpoint string
 
-@description('Storage account name for redacted results')
-param redactedStorageAccountName string
-
 @description('Container name for redacted transcriptions')
 param outputRedactedContainer string = 'redacted-transcriptions'
 
@@ -88,6 +82,28 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     }
     accessTier: 'Hot'
     minimumTlsVersion: 'TLS1_2'
+  }
+}
+
+// Create containers in the storage account
+resource recordingsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: '${storageAccount.name}/default/${recordingsContainer}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource transcriptionsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: '${storageAccount.name}/default/${transcriptionOutputContainer}'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource redactedContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: '${storageAccount.name}/default/${outputRedactedContainer}'
+  properties: {
+    publicAccess: 'None'
   }
 }
 
@@ -166,7 +182,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         // Application specific settings
         {
           name: 'RECORDINGS_STORAGE_ACCOUNT_NAME'
-          value: recordingsStorageName
+          value: storageAccountName
         }
         {
           name: 'RECORDINGS_CONTAINER'
@@ -214,10 +230,31 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         }
         {
           name: 'REDACTED_STORAGE_ACCOUNT_NAME'
-          value: redactedStorageAccountName
+          value: storageAccountName
         }
       ]
     }
+  }
+}
+
+// Role assignment for function app to access storage
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, functionApp.id, 'StorageBlobDataContributor')
+  scope: storageAccount
+  properties: {
+    principalId: functionApp.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource roleAssignmentOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, functionApp.id, 'StorageBlobDataOwner')
+  scope: storageAccount
+  properties: {
+    principalId: functionApp.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b') // Storage Blob Data Owner
+    principalType: 'ServicePrincipal'
   }
 }
 

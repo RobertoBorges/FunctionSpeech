@@ -11,10 +11,8 @@ Then the results are sent to OpenAI for redaction and the redacted results are s
 - Python 3.11.9 or later
 - Azure Functions Core Tools
 - Azure CLI
-- Azure Storage Account
 - Azure Speech Service
 - Azure Function App
-- Azure Blob Storage
 
 ## Quick Start with Bicep Deployment
 
@@ -36,24 +34,21 @@ You can quickly deploy all required resources using the provided Bicep template 
      --resource-group YourResourceGroupName \
      --template-file infra/azureFunction.bicep \
      --parameters functionAppName=YourFunctionAppName \
-     --parameters recordingsStorageName=YourRecordingsStorageName \
      --parameters speechSubscriptionKey=YourSpeechSubscriptionKey \
      --parameters speechRegion=westus2 \
      --parameters saOutputSas=YourSasToken \
      --parameters openaiCompletionsEndpoint=YourOpenAIEndpoint \
      --parameters completionsSubscriptionKey=YourOpenAIKey \
      --parameters languageSubscriptionKey=YourLanguageKey \
-     --parameters languageEndpoint=YourLanguageEndpoint \
-     --parameters redactedStorageAccountName=YourRedactedStorageName
+     --parameters languageEndpoint=YourLanguageEndpoint
    ```
 
 ### Example Parameters
 
 Here's an example of parameter values (replace with your actual values):
 
-``` bash
+```
 functionAppName=speech-function-app
-recordingsStorageName=speechrecordings2025
 speechSubscriptionKey=12345abcdef6789ghijklmn0123456789
 speechRegion=westus2
 saOutputSas="?sv=2022-11-02&ss=b&srt=sco&sp=rwdlaciytfx&se=2025-12-31T23:59:59Z&st=2025-04-15T00:00:00Z&spr=https&sig=abcdefghijklmnopqrstuvwxyz"
@@ -61,28 +56,29 @@ openaiCompletionsEndpoint=https://myopenai.openai.azure.com/
 completionsSubscriptionKey=98765abcdef1234ghijklmn9876543210
 languageSubscriptionKey=abcdef1234567890ghijklmnopq987654
 languageEndpoint=https://mylanguage.cognitiveservices.azure.com/
-redactedStorageAccountName=redactedspeech2025
 ```
+
+### What the Bicep Template Does
+
+The Bicep template automatically:
+
+1. Creates a single storage account that serves both recordings and redacted storage purposes
+2. Creates all required containers (`audio-recordings`, `transcriptions`, and `redacted-transcriptions`)
+3. Sets up Application Insights for monitoring
+4. Deploys a Function App with a consumption plan
+5. Configures all required environment variables
+6. Assigns necessary RBAC permissions for the Function App to access storage
 
 ### Post-Deployment Steps
 
 After deployment:
 
-1. Create the required containers in your storage accounts:
-
-   ``` bash
-   az storage container create --name audio-recordings --account-name YourRecordingsStorageName
-   az storage container create --name transcriptions --account-name YourRecordingsStorageName
-   az storage container create --name redacted-transcriptions --account-name YourRedactedStorageName
+1. Deploy your function code:
    ```
-
-2. Assign required permissions as outlined in the Permissions section
-
-3. Deploy your function code:
-
-   ``` bash
    func azure functionapp publish YourFunctionAppName
    ```
+
+2. Upload audio files to the `audio-recordings` container to trigger the processing
 
 ## Deployment Steps
 
