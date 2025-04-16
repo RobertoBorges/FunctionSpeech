@@ -169,6 +169,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       pythonVersion: '3.12'
       minTlsVersion: '1.2'
       linuxFxVersion: 'Python|3.12'
+      alwaysOn: true
       appSettings: [
         // Storage account connection using managed identity
         {
