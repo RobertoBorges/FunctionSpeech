@@ -75,6 +75,27 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_65E41E684CC54DB696385CCF2F12EC0F }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5F2562991E53414F884D39612E98C783 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2E9E25C5423F4CBEA5847155A567B9FE }}
+          
+      - name: Create Resource Group
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az group create --name ${{ secrets.AZURE_RESOURCE_GROUP }} --location ${{ secrets.AZURE_LOCATION }}
+          
+      - name: Deploy Azure Infrastructure
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az deployment group create \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --template-file infra/azureFunction.bicep \
+              --parameters functionAppName=${{ env.AZURE_FUNCTIONAPP_NAME }} \
+              --parameters speechSubscriptionKey=${{ secrets.SPEECH_SUBSCRIPTION_KEY }} \
+              --parameters speechRegion=${{ secrets.SPEECH_REGION }} \
+              --parameters openaiCompletionsEndpoint=${{ secrets.OPENAI_COMPLETIONS_ENDPOINT }} \
+              --parameters completionsSubscriptionKey=${{ secrets.COMPLETIONS_SUBSCRIPTION_KEY }} \
+              --parameters languageSubscriptionKey=${{ secrets.LANGUAGE_SUBSCRIPTION_KEY }} \
+              --parameters languageEndpoint=${{ secrets.LANGUAGE_ENDPOINT }}
 
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
