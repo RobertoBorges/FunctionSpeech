@@ -16,7 +16,7 @@ env:
   PYTHON_VERSION: '3.12' # set this to the python version to use (supports 3.6, 3.7, 3.8)
 
 jobs:
-  build:
+  build-deploy-infra:
     runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
@@ -53,22 +53,6 @@ jobs:
             release.zip
             !venv/
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: python-app
-
-      - name: Unzip artifact for deployment
-        run: unzip release.zip     
-        
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -88,7 +72,7 @@ jobs:
           inlineScript: |
             az deployment group create \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --template-file ../infra/azureFunction.bicep \
+              --template-file /infra/azureFunction.bicep \
               --parameters functionAppName=${{ env.AZURE_FUNCTIONAPP_NAME }} \
               --parameters speechSubscriptionKey=${{ secrets.SPEECH_SUBSCRIPTION_KEY }} \
               --parameters speechRegion=${{ secrets.SPEECH_REGION }} \
@@ -96,6 +80,29 @@ jobs:
               --parameters completionsSubscriptionKey=${{ secrets.COMPLETIONS_SUBSCRIPTION_KEY }} \
               --parameters languageSubscriptionKey=${{ secrets.LANGUAGE_SUBSCRIPTION_KEY }} \
               --parameters languageEndpoint=${{ secrets.LANGUAGE_ENDPOINT }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-deploy-infra
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Unzip artifact for deployment
+        run: unzip release.zip     
+        
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_65E41E684CC54DB696385CCF2F12EC0F }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5F2562991E53414F884D39612E98C783 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2E9E25C5423F4CBEA5847155A567B9FE }}
 
       - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
