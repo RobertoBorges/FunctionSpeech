@@ -14,7 +14,7 @@ param runtime string = 'python'
 param storageAccountSku string = 'Standard_LRS'
 
 @description('App Service Plan SKU')
-param appServicePlanSku string = 'Y1' // Consumption plan
+param appServicePlanSku string = 'B3'
 
 @description('Container name for audio files')
 param recordingsContainer string = 'audio-recordings'
@@ -28,10 +28,6 @@ param speechSubscriptionKey string
 
 @description('Speech service region')
 param speechRegion string = 'westus2'
-
-@description('SAS token for storage account used by Speech service')
-@secure()
-param saOutputSas string
 
 @description('OpenAI completions endpoint')
 param openaiCompletionsEndpoint string
@@ -52,6 +48,15 @@ param languageEndpoint string
 
 @description('Container name for redacted transcriptions')
 param outputRedactedContainer string = 'redacted-transcriptions'
+
+@description('SAS token expiry in days from now')
+param sasExpiryDays int = 365 // 1 year
+
+@description('SAS token expiry in days from now')
+param currentDayForSASGenaration string = utcNow()
+
+// Format the expiry date using dateTimeAdd to add 365 days to current UTC time
+var sasExpiryDate = dateTimeAdd(currentDayForSASGenaration, 'P${sasExpiryDays}D')
 
 // Storage Account for function app
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -85,23 +90,32 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   }
 }
 
+// Define the blobServices resource
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  name: 'default'
+  parent: storageAccount
+}
+
 // Create containers in the storage account
 resource recordingsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: '${storageAccount.name}/default/${recordingsContainer}'
+  name: recordingsContainer
+  parent: blobServices
   properties: {
     publicAccess: 'None'
   }
 }
 
 resource transcriptionsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: '${storageAccount.name}/default/${transcriptionOutputContainer}'
+  name: transcriptionOutputContainer
+  parent: blobServices
   properties: {
     publicAccess: 'None'
   }
 }
 
 resource redactedContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: '${storageAccount.name}/default/${outputRedactedContainer}'
+  name: outputRedactedContainer
+  parent: blobServices
   properties: {
     publicAccess: 'None'
   }
@@ -115,7 +129,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: 'web'
     Request_Source: 'rest'
-    WorkspaceResourceId: null
   }
 }
 
@@ -123,18 +136,29 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: '${functionAppName}-plan'
   location: location
-  kind: 'functionapp'
+  kind: 'app,linux'
   sku: {
     name: appServicePlanSku
   }
-  properties: {}
+  properties: {
+    perSiteScaling: false
+    reserved: true // Linux
+    isXenon: false
+    isSpot: false
+    hyperV: false
+    targetWorkerCount: 0
+    targetWorkerSizeId: 0
+    hostingEnvironmentProfile: null
+    elasticScaleEnabled: false
+    maximumElasticWorkerCount: 1
+  }
 }
 
 // Function App
 resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: functionAppName
   location: location
-  kind: 'functionapp'
+  kind: 'functionapp,linux'
   identity: {
     type: 'SystemAssigned'
   }
@@ -142,8 +166,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      pythonVersion: '3.11'
+      pythonVersion: '3.12'
       minTlsVersion: '1.2'
+      linuxFxVersion: 'Python|3.12'
       appSettings: [
         // Storage account connection using managed identity
         {
@@ -202,7 +227,12 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         }
         {
           name: 'SA_OUTPUT_SAS'
-          value: saOutputSas
+          value: listAccountSas(storageAccount.id, '2023-05-01', {
+            signedServices: 'b'
+            signedPermission: 'rwdlacu'
+            signedExpiry: sasExpiryDate
+            signedResourceTypes: 'co'
+          }).accountSasToken
         }
         {
           name: 'OPENAI_COMPLETIONS_ENDPOINT'
@@ -238,7 +268,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
 }
 
 // Role assignment for function app to access storage
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, functionApp.id, 'StorageBlobDataContributor')
   scope: storageAccount
   properties: {

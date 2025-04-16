@@ -36,7 +36,6 @@ You can quickly deploy all required resources using the provided Bicep template 
      --parameters functionAppName=YourFunctionAppName \
      --parameters speechSubscriptionKey=YourSpeechSubscriptionKey \
      --parameters speechRegion=westus2 \
-     --parameters saOutputSas=YourSasToken \
      --parameters openaiCompletionsEndpoint=YourOpenAIEndpoint \
      --parameters completionsSubscriptionKey=YourOpenAIKey \
      --parameters languageSubscriptionKey=YourLanguageKey \
@@ -51,7 +50,6 @@ Here's an example of parameter values (replace with your actual values):
 functionAppName=speech-function-app
 speechSubscriptionKey=12345abcdef6789ghijklmn0123456789
 speechRegion=westus2
-saOutputSas="?sv=2022-11-02&ss=b&srt=sco&sp=rwdlaciytfx&se=2025-12-31T23:59:59Z&st=2025-04-15T00:00:00Z&spr=https&sig=abcdefghijklmnopqrstuvwxyz"
 openaiCompletionsEndpoint=https://myopenai.openai.azure.com/
 completionsSubscriptionKey=98765abcdef1234ghijklmn9876543210
 languageSubscriptionKey=abcdef1234567890ghijklmnopq987654
@@ -64,10 +62,11 @@ The Bicep template automatically:
 
 1. Creates a single storage account that serves both recordings and redacted storage purposes
 2. Creates all required containers (`audio-recordings`, `transcriptions`, and `redacted-transcriptions`)
-3. Sets up Application Insights for monitoring
-4. Deploys a Function App with a consumption plan
-5. Configures all required environment variables
-6. Assigns necessary RBAC permissions for the Function App to access storage
+3. **Generates a SAS token** for blob access using the built-in `listAccountSas` function
+4. Sets up Application Insights for monitoring
+5. Deploys a Function App with a consumption plan
+6. Configures all required environment variables including the auto-generated SAS token
+7. Assigns necessary RBAC permissions for the Function App to access storage
 
 ### Post-Deployment Steps
 
