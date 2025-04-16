@@ -73,7 +73,7 @@ jobs:
           inlineScript: |
             az deployment group create \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --template-file ../infra/azureFunction.bicep \
+              --template-file ./infra/azureFunction.bicep \
               --parameters functionAppName=${{ env.AZURE_FUNCTIONAPP_NAME }} \
               --parameters speechSubscriptionKey=${{ secrets.SPEECH_SUBSCRIPTION_KEY }} \
               --parameters speechRegion=${{ secrets.SPEECH_REGION }} \
