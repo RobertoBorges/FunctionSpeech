@@ -228,12 +228,12 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         }
         {
           name: 'SA_OUTPUT_SAS'
-          value: listAccountSas(storageAccount.id, '2023-05-01', {
-            signedServices: 'b'
+          value: storageAccount.listServiceSas('2023-05-01', {
+            canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
+            signedResource: 'c'
             signedPermission: 'rwdlacu'
             signedExpiry: sasExpiryDate
-            signedResourceTypes: 'co'
-          }).accountSasToken
+          }).serviceSasToken
         }
         {
           name: 'OPENAI_COMPLETIONS_ENDPOINT'
@@ -266,6 +266,10 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       ]
     }
   }
+  dependsOn: [
+    recordingsContainerResource
+    redactedContainerResource
+  ]
 }
 
 // Role assignment for function app to access storage
