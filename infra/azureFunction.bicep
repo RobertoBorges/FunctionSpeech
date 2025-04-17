@@ -232,7 +232,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           name: 'SA_OUTPUT_SAS'
           value: storageAccount.listServiceSas('2023-05-01', {
             canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
-            signedResource: 'co'
+            signedResource: 'c'
             signedPermission: 'rwdlacu'
             signedProtocol: 'https'
             signedExpiry: sasExpiryDate
