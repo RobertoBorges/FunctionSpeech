@@ -233,7 +233,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
             signedResource: 'c'
             signedPermission: 'racwdli'
             signedProtocol: 'https'
-            signedExpiry: sasExpiryDate
+            signedExpiry: '"${sasExpiryDate}"'
           }).serviceSasToken
         }
         {
