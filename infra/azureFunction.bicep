@@ -232,6 +232,8 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
             canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
             signedResource: 'c'
             signedPermission: 'rwdlacu'
+            signedProtocol: 'https'
+            signedStart: currentDayForSASGenaration
             signedExpiry: sasExpiryDate
           }).serviceSasToken
         }
