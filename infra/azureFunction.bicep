@@ -53,265 +53,122 @@ param outputRedactedContainer string = 'redacted-transcriptions'
 param sasExpiryDays int = 365 // 1 year
 
 @description('SAS token expiry in days from now')
-param currentDayForSASGenaration string = utcNow()
+param currentDayForSASGeneration string = utcNow()
 
 @description('Optional: Existing Cognitive Services account resource ID for role assignment')
 param existingCognitiveServicesMSIId string = ''
 
-// Format the expiry date using dateTimeAdd to add 365 days to current UTC time
-var sasExpiryDate = dateTimeAdd(currentDayForSASGenaration, 'P${sasExpiryDays}D')
-
-// Storage Account for function app
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageAccountName
-  location: location
-  kind: 'StorageV2'
-  sku: {
-    name: storageAccountSku
-  }
-  properties: {
-    supportsHttpsTrafficOnly: true
-    encryption: {
-      services: {
-        blob: {
-          enabled: true
-        }
-        file: {
-          enabled: true
-        }
-        queue: {
-          enabled: true
-        }
-        table: {
-          enabled: true
-        }
-      }
-      keySource: 'Microsoft.Storage'
-    }
-    accessTier: 'Hot'
-    minimumTlsVersion: 'TLS1_2'
+// Deploy Storage Module
+module storageModule './modules/storage.bicep' = {
+  name: 'storageDeployment'
+  params: {
+    storageAccountName: storageAccountName
+    location: location
+    storageAccountSku: storageAccountSku
+    recordingsContainer: recordingsContainer
+    transcriptionOutputContainer: transcriptionOutputContainer
+    outputRedactedContainer: outputRedactedContainer
+    sasExpiryDays: sasExpiryDays
+    currentDayForSASGeneration: currentDayForSASGeneration
   }
 }
 
-// Define the blobServices resource
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
-  name: 'default'
-  parent: storageAccount
-}
-
-// Create containers in the storage account
-resource recordingsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: recordingsContainer
-  parent: blobServices
-  properties: {
-    publicAccess: 'None'
+// Deploy Monitoring Module (Application Insights)
+module monitoringModule './modules/monitoring.bicep' = {
+  name: 'monitoringDeployment'
+  params: {
+    appInsightsName: '${functionAppName}-insights'
+    location: location
   }
 }
 
-resource transcriptionsContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: transcriptionOutputContainer
-  parent: blobServices
-  properties: {
-    publicAccess: 'None'
+// Prepare application settings for Function App
+var functionAppSettings = [
+  // Application specific settings
+  {
+    name: 'RECORDINGS_STORAGE_ACCOUNT_NAME'
+    value: storageModule.outputs.storageAccountName
+  }
+  {
+    name: 'RECORDINGS_CONTAINER'
+    value: storageModule.outputs.recordingsContainerName
+  }
+  {
+    name: 'TRANSCRIPTION_OUTPUT_CONTAINER'
+    value: storageModule.outputs.transcriptionOutputContainerName
+  }
+  {
+    name: 'SPEECH_SUBSCRIPTION_KEY'
+    value: speechSubscriptionKey
+  }
+  {
+    name: 'SPEECH_TO_TEXT_ENDPOINT'
+    value: 'https://${speechRegion}.api.cognitive.microsoft.com'
+  }
+  {
+    name: 'SA_OUTPUT_SAS'
+    value: storageModule.outputs.sasToken
+  }
+  {
+    name: 'OPENAI_COMPLETIONS_ENDPOINT'
+    value: openaiCompletionsEndpoint
+  }
+  {
+    name: 'COMPLETIONS_SUBSCRIPTION_KEY'
+    value: completionsSubscriptionKey
+  }
+  {
+    name: 'OPENAI_COMPLETIONS_MODEL'
+    value: openaiCompletionsModel
+  }
+  {
+    name: 'LANGUAGE_SUBSCRIPTION_KEY'
+    value: languageSubscriptionKey
+  }
+  {
+    name: 'LANGUAGE_ENDPOINT'
+    value: languageEndpoint
+  }
+  {
+    name: 'OUTPUT_REDACTED_CONTAINER'
+    value: storageModule.outputs.outputRedactedContainerName
+  }
+  {
+    name: 'REDACTED_STORAGE_ACCOUNT_NAME'
+    value: storageModule.outputs.storageAccountName
+  }
+]
+
+// Deploy Compute Module (App Service Plan + Function App)
+module computeModule './modules/compute.bicep' = {
+  name: 'computeDeployment'
+  params: {
+    functionAppName: functionAppName
+    appServicePlanName: '${functionAppName}-plan'
+    location: location
+    runtime: runtime
+    appServicePlanSku: appServicePlanSku
+    storageAccountName: storageModule.outputs.storageAccountName
+    appInsightsInstrumentationKey: monitoringModule.outputs.instrumentationKey
+    appSettings: functionAppSettings
   }
 }
 
-resource redactedContainerResource 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
-  name: outputRedactedContainer
-  parent: blobServices
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-// Application Insights
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: '${functionAppName}-insights'
-  location: location
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    Request_Source: 'rest'
-  }
-}
-
-// App Service Plan
-resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
-  name: '${functionAppName}-plan'
-  location: location
-  kind: 'app,linux'
-  sku: {
-    name: appServicePlanSku
-  }
-  properties: {
-    perSiteScaling: false
-    reserved: true // Linux
-    isXenon: false
-    isSpot: false
-    hyperV: false
-    targetWorkerCount: 0
-    targetWorkerSizeId: 0
-    hostingEnvironmentProfile: null
-    elasticScaleEnabled: false
-    maximumElasticWorkerCount: 1
-  }
-}
-
-// Function App
-resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
-  name: functionAppName
-  location: location
-  kind: 'functionapp,linux'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      pythonVersion: '3.12'
-      minTlsVersion: '1.2'
-      linuxFxVersion: 'Python|3.12'
-      alwaysOn: true
-      appSettings: [
-        // Storage account connection using managed identity
-        {
-          name: 'AzureWebJobsStorage__accountName'
-          value: storageAccountName
-        }
-        {
-          name: 'AzureWebJobsStorage__credential'
-          value: 'managedidentity'
-        }
-        {
-          name: 'IngestAccount__blobServiceUri'
-          value: 'https://${storageAccountName}.blob.core.windows.net'
-        }
-        // Function settings
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: runtime
-        }
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsights.properties.InstrumentationKey
-        }
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: '1'
-        }
-        {
-          name: 'ENABLE_ORYX_BUILD'
-          value: 'true'
-        }
-        // Application specific settings
-        {
-          name: 'RECORDINGS_STORAGE_ACCOUNT_NAME'
-          value: storageAccountName
-        }
-        {
-          name: 'RECORDINGS_CONTAINER'
-          value: recordingsContainer
-        }
-        {
-          name: 'TRANSCRIPTION_OUTPUT_CONTAINER'
-          value: transcriptionOutputContainer
-        }
-        {
-          name: 'SPEECH_SUBSCRIPTION_KEY'
-          value: speechSubscriptionKey
-        }
-        {
-          name: 'SPEECH_TO_TEXT_ENDPOINT'
-          value: 'https://${speechRegion}.api.cognitive.microsoft.com'
-        }
-        {
-          name: 'SA_OUTPUT_SAS'
-          value: storageAccount.listServiceSas('2023-05-01', {
-            canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
-            signedResource: 'c'
-            signedPermission: 'racwdl'
-            signedProtocol: 'https'
-            signedExpiry: sasExpiryDate
-          }).serviceSasToken
-        }
-        {
-          name: 'OPENAI_COMPLETIONS_ENDPOINT'
-          value: openaiCompletionsEndpoint
-        }
-        {
-          name: 'COMPLETIONS_SUBSCRIPTION_KEY'
-          value: completionsSubscriptionKey
-        }
-        {
-          name: 'OPENAI_COMPLETIONS_MODEL'
-          value: openaiCompletionsModel
-        }
-        {
-          name: 'LANGUAGE_SUBSCRIPTION_KEY'
-          value: languageSubscriptionKey
-        }
-        {
-          name: 'LANGUAGE_ENDPOINT'
-          value: languageEndpoint
-        }
-        {
-          name: 'OUTPUT_REDACTED_CONTAINER'
-          value: outputRedactedContainer
-        }
-        {
-          name: 'REDACTED_STORAGE_ACCOUNT_NAME'
-          value: storageAccountName
-        }
-      ]
-    }
-  }
-  dependsOn: [
-    recordingsContainerResource
-    redactedContainerResource
-  ]
-}
-
-// Role assignment for function app to access storage
-resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, functionApp.id, 'StorageBlobDataContributor')
-  scope: storageAccount
-  properties: {
-    principalId: functionApp.identity.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource roleAssignmentOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, functionApp.id, 'StorageBlobDataOwner')
-  scope: storageAccount
-  properties: {
-    principalId: functionApp.identity.principalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b') // Storage Blob Data Owner
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Assign Contributor role to the Cognitive Services account on the storage account
-resource cognitiveServicesStorageContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(existingCognitiveServicesMSIId)) {
-  name: guid(resourceGroup().id, storageAccount.id, existingCognitiveServicesMSIId, 'StorageBlobDataContributor')
-  scope: storageAccount
-  properties: {
-    principalId: existingCognitiveServicesMSIId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalType: 'ServicePrincipal'
+// Deploy Security Module (Role Assignments)
+module securityModule './modules/security.bicep' = {
+  name: 'securityDeployment'
+  params: {
+    storageAccountId: storageModule.outputs.storageAccountId
+    functionAppPrincipalId: computeModule.outputs.functionAppIdentityPrincipalId
+    existingCognitiveServicesMSIId: existingCognitiveServicesMSIId
+    resourceGroupId: resourceGroup().id
   }
 }
 
 // Outputs
-output functionAppName string = functionApp.name
-output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
-output storageAccountName string = storageAccount.name
-output appInsightsName string = appInsights.name
-output appServicePlanName string = appServicePlan.name
-output functionAppIdentityPrincipalId string = functionApp.identity.principalId
+output functionAppName string = computeModule.outputs.functionAppName
+output functionAppUrl string = computeModule.outputs.functionAppUrl
+output storageAccountName string = storageModule.outputs.storageAccountName
+output appInsightsName string = monitoringModule.outputs.appInsightsName
+output appServicePlanName string = computeModule.outputs.appServicePlanName
+output functionAppIdentityPrincipalId string = computeModule.outputs.functionAppIdentityPrincipalId
