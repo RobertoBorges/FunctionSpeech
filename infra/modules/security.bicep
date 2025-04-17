@@ -11,7 +11,7 @@ param existingCognitiveServicesMSIId string = ''
 param resourceGroupId string
 
 // Role assignment for function app to access storage as a contributor
-resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource roleAssignmentBlobDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroupId, functionAppPrincipalId, 'StorageBlobDataContributor')
   scope: resourceGroup()
   properties: {
@@ -20,6 +20,18 @@ resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022
     principalType: 'ServicePrincipal'
   }
 }
+
+// Role assignment for function app to access storage as a contributor
+resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroupId, functionAppPrincipalId, 'StorageContributor')
+  scope: resourceGroup()
+  properties: {
+    principalId: functionAppPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab') // Storage Account Contributor
+    principalType: 'ServicePrincipal'
+  }
+}
+
 
 // Role assignment for function app to access storage as an owner
 resource roleAssignmentOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
