@@ -55,6 +55,9 @@ param sasExpiryDays int = 365 // 1 year
 @description('SAS token expiry in days from now')
 param currentDayForSASGenaration string = utcNow()
 
+@description('Optional: Existing Cognitive Services account resource ID for role assignment')
+param existingCognitiveServicesId string = ''
+
 // Format the expiry date using dateTimeAdd to add 365 days to current UTC time
 var sasExpiryDate = dateTimeAdd(currentDayForSASGenaration, 'P${sasExpiryDays}D')
 
@@ -290,6 +293,17 @@ resource roleAssignmentOwner 'Microsoft.Authorization/roleAssignments@2022-04-01
   properties: {
     principalId: functionApp.identity.principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b') // Storage Blob Data Owner
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Assign Contributor role to the Cognitive Services account on the storage account
+resource cognitiveServicesStorageContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(existingCognitiveServicesId)) {
+  name: guid(resourceGroup().id, storageAccount.id, existingCognitiveServicesId, 'StorageBlobDataContributor')
+  scope: storageAccount
+  properties: {
+    principalId: resourceId(split(existingCognitiveServicesId, '/')[2], split(existingCognitiveServicesId, '/')[4], 'Microsoft.CognitiveServices/accounts', last(split(existingCognitiveServicesId, '/')))
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalType: 'ServicePrincipal'
   }
 }
