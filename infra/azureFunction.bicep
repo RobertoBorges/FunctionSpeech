@@ -58,8 +58,6 @@ param currentDayForSASGenaration string = utcNow()
 // Format the expiry date using dateTimeAdd to add 365 days to current UTC time
 var sasExpiryDate = dateTimeAdd(currentDayForSASGenaration, 'P${sasExpiryDays}D')
 
-var currentDayForSASGenarationUTC = dateTimeAdd(currentDayForSASGenaration, 'P0D')
-
 // Storage Account for function app
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -233,7 +231,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: storageAccount.listServiceSas('2023-05-01', {
             canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
             signedResource: 'c'
-            signedPermission: 'rwdlacu'
+            signedPermission: 'racwdli'
             signedProtocol: 'https'
             signedExpiry: sasExpiryDate
           }).serviceSasToken
