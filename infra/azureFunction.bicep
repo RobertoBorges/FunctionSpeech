@@ -231,9 +231,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
           value: storageAccount.listServiceSas('2023-05-01', {
             canonicalizedResource: '/blob/${storageAccount.name}/${transcriptionOutputContainer}'
             signedResource: 'c'
-            signedPermission: 'racwdli'
+            signedPermission: 'racwdl'
             signedProtocol: 'https'
-            signedExpiry: '"${sasExpiryDate}"'
+            signedExpiry: sasExpiryDate
           }).serviceSasToken
         }
         {
