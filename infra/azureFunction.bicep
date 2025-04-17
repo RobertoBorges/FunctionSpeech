@@ -302,7 +302,7 @@ resource cognitiveServicesStorageContributorRole 'Microsoft.Authorization/roleAs
   name: guid(resourceGroup().id, storageAccount.id, existingCognitiveServicesId, 'StorageBlobDataContributor')
   scope: storageAccount
   properties: {
-    principalId: resourceId(split(existingCognitiveServicesId, '/')[2], split(existingCognitiveServicesId, '/')[4], 'Microsoft.CognitiveServices/accounts', last(split(existingCognitiveServicesId, '/')))
+    principalId: reference(existingCognitiveServicesId, '2023-05-01').identity.principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalType: 'ServicePrincipal'
   }
