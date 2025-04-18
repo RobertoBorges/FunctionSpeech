@@ -32,12 +32,12 @@ param speechRegion string = 'westus2'
 @description('OpenAI completions endpoint')
 param openaiCompletionsEndpoint string
 
-@description('OpenAI completions subscription key')
-@secure()
-param completionsSubscriptionKey string
-
 @description('OpenAI model name')
 param openaiCompletionsModel string = 'gpt-35-turbo'
+
+@description('Optional: Existing Open AI Key not required if using Managed Identity to access OpenAI')
+@secure()
+param openaiCompletionsKey string = ''
 
 @description('Language service subscription key')
 @secure()
@@ -57,10 +57,6 @@ param currentDayForSASGeneration string = utcNow()
 
 @description('Optional: Existing Cognitive Services account resource ID for role assignment')
 param existingCognitiveServicesMSIId string = ''
-
-@description('Optional: Existing Open AI Key not required if using Managed Identity to access OpenAI')
-@secure()
-param openAIKey string = ''
 
 // Deploy Storage Module
 module storageModule './modules/storage.bicep' = {
@@ -118,16 +114,12 @@ var functionAppSettings = [
     value: openaiCompletionsEndpoint
   }
   {
-    name: 'COMPLETIONS_SUBSCRIPTION_KEY'
-    value: completionsSubscriptionKey
-  }
-  {
     name: 'OPENAI_COMPLETIONS_MODEL'
     value: openaiCompletionsModel
   }
   {
     name: 'OPENAI_COMPLETIONS_KEY'
-    value: openAIKey
+    value: openaiCompletionsKey
   }
   {
     name: 'LANGUAGE_SUBSCRIPTION_KEY'

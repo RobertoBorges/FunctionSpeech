@@ -37,7 +37,7 @@ You can quickly deploy all required resources using the provided Bicep template 
      --parameters speechSubscriptionKey=YourSpeechSubscriptionKey \
      --parameters speechRegion=westus2 \
      --parameters openaiCompletionsEndpoint=YourOpenAIEndpoint \
-     --parameters completionsSubscriptionKey=YourOpenAIKey \
+     --parameters openaiCompletionsKey=YourOpenAIKey \
      --parameters languageSubscriptionKey=YourLanguageKey \
      --parameters languageEndpoint=YourLanguageEndpoint
    ```
@@ -51,7 +51,7 @@ functionAppName=speech-function-app
 speechSubscriptionKey=12345abcdef6789ghijklmn0123456789
 speechRegion=westus2
 openaiCompletionsEndpoint=https://myopenai.openai.azure.com/
-completionsSubscriptionKey=98765abcdef1234ghijklmn9876543210
+openaiCompletionsKey=98765abcdef1234ghijklmn9876543210
 languageSubscriptionKey=abcdef1234567890ghijklmnopq987654
 languageEndpoint=https://mylanguage.cognitiveservices.azure.com/
 ```
@@ -91,7 +91,7 @@ SPEECH_SUBSCRIPTION_KEY = "YOUR_SPEECH_SUBSCRIPTION_KEY REQUIRED FOR SPEECH SERV
 SPEECH_TO_TEXT_ENDPOINT = "https://REGION.api.cognitive.microsoft.com"
 SA_OUTPUT_SAS = "SAS_TOKEN FROM STORAGE ACCOUNT THAT WILL BE USED BY SPEECH SERVICE TO DROP RESULTS AS CALLBACK"
 OPENAI_COMPLETIONS_ENDPOINT = "https://YOUR_COMPLETIONS_SERVICE.cognitiveservices.azure.com"
-COMPLETIONS_SUBSCRIPTION_KEY = "YOUR_COMPLETIONS_SUBSCRIPTION_KEY"
+OPENAI_COMPLETIONS_KEY = "YOUR_COMPLETIONS_SUBSCRIPTION_KEY"
 OPENAI_COMPLETIONS_MODEL = "gpt-35-turbo"
 LANGUAGE_SUBSCRIPTION_KEY = "YOUR_LANGUAGE_SUBSCRIPTION_KEY"
 LANGUAGE_ENDPOINT = "https://YOUR_LANGUAGE_SERVICE.cognitiveservices.azure.com"

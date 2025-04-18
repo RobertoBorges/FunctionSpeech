@@ -79,9 +79,8 @@ jobs:
               --parameters speechRegion=${{ secrets.SPEECH_REGION }} \
               --parameters openaiCompletionsEndpoint=${{ secrets.OPENAI_COMPLETIONS_ENDPOINT }} \
               --parameters openaiCompletionsModel=${{ secrets.OPENAI_COMPLETIONS_MODEL }} \
-              --parameters openAIKey=${{ secrets.OPENAI_COMPLETIONS_KEY }} \
+              --parameters openaiCompletionsKey=${{ secrets.OPENAI_COMPLETIONS_KEY }} \
               --parameters existingCognitiveServicesMSIId=${{ secrets.EXISTING_COGNITIVE_SERVICES_MSI_ID }} \
-              --parameters completionsSubscriptionKey=${{ secrets.COMPLETIONS_SUBSCRIPTION_KEY }} \
               --parameters languageSubscriptionKey=${{ secrets.LANGUAGE_SUBSCRIPTION_KEY }} \
               --parameters languageEndpoint=${{ secrets.LANGUAGE_ENDPOINT }}
 
