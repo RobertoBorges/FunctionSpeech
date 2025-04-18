@@ -20,7 +20,7 @@ param appServicePlanSku string = 'B3'
 param recordingsContainer string = 'audio-recordings'
 
 @description('Container name for transcription output')
-param transcriptionOutputContainer string = 'transcriptions'
+param transcriptionOutputContainer string = 'transcribed'
 
 @description('Speech service subscription key')
 @secure()
