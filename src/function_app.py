@@ -20,6 +20,7 @@ TRANSCRIPTION_OUTPUT_CONTAINER = os.environ.get("TRANSCRIPTION_OUTPUT_CONTAINER"
 SA_OUTPUT_SAS = os.environ.get("SA_OUTPUT_SAS")
 OPENAI_COMPLETIONS_ENDPOINT = os.environ.get("OPENAI_COMPLETIONS_ENDPOINT", "")
 OPENAI_COMPLETIONS_MODEL = os.environ.get("OPENAI_COMPLETIONS_MODEL")
+OPENAI_COMPLETIONS_KEY = os.environ.get("OPENAI_COMPLETIONS_KEY")
 COMPLETIONS_SUBSCRIPTION_KEY = os.environ.get("COMPLETIONS_SUBSCRIPTION_KEY", "")
 LANGUAGE_SUBSCRIPTION_KEY = os.environ.get("LANGUAGE_SUBSCRIPTION_KEY")
 LANGUAGE_ENDPOINT = os.environ.get("LANGUAGE_ENDPOINT", "")
@@ -87,16 +88,22 @@ def agent_detection(text):
         ]
     }
     
-    # Get token for Azure OpenAI
-    token = credential.get_token("https://cognitiveservices.azure.com/.default").token
-    
     # Build the URL for the OpenAI endpoint
     base_url = f"{OPENAI_COMPLETIONS_ENDPOINT}/openai/deployments/{OPENAI_COMPLETIONS_MODEL}/chat/completions?api-version=2025-01-01-preview"
-    headers = {
-        "Content-Type": "application/json", 
-        "Authorization": f"Bearer {token}"
-    }
-    
+    if not OPENAI_COMPLETIONS_ENDPOINT:
+        # Get token for Azure OpenAI
+        token = credential.get_token("https://cognitiveservices.azure.com/.default").token
+        headers = {
+            "Content-Type": "application/json", 
+            "Authorization": f"Bearer {token}"
+        }
+    else:
+        token = OPENAI_COMPLETIONS_KEY
+        headers = {
+            "Content-Type": "application/json", 
+            "api_key": token
+        }
+            
     parsed_url = urllib.parse.urlparse(base_url)
     conn = http.client.HTTPSConnection(parsed_url.netloc)
     body_str = json.dumps(body)

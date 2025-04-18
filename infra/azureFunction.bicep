@@ -58,6 +58,10 @@ param currentDayForSASGeneration string = utcNow()
 @description('Optional: Existing Cognitive Services account resource ID for role assignment')
 param existingCognitiveServicesMSIId string = ''
 
+@description('Optional: Existing Open AI Key not required if using Managed Identity to access OpenAI')
+@secure()
+param openAIKey string = ''
+
 // Deploy Storage Module
 module storageModule './modules/storage.bicep' = {
   name: 'storageDeployment'
@@ -120,6 +124,10 @@ var functionAppSettings = [
   {
     name: 'OPENAI_COMPLETIONS_MODEL'
     value: openaiCompletionsModel
+  }
+  {
+    name: 'OPENAI_COMPLETIONS_KEY'
+    value: openAIKey
   }
   {
     name: 'LANGUAGE_SUBSCRIPTION_KEY'
