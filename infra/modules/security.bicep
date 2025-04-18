@@ -22,6 +22,17 @@ resource roleAssignmentBlobDataContributor 'Microsoft.Authorization/roleAssignme
 }
 
 // Role assignment for function app to access storage as a contributor
+resource roleAssignmentQueueDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroupId, functionAppPrincipalId, 'StorageQueueDataContributor')
+  scope: resourceGroup()
+  properties: {
+    principalId: functionAppPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88') // Storage Queue Data Contributor
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Role assignment for function app to access storage as a contributor
 resource roleAssignmentContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroupId, functionAppPrincipalId, 'StorageContributor')
   scope: resourceGroup()
