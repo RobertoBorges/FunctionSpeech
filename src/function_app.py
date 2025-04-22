@@ -89,7 +89,7 @@ def agent_detection(text):
     
     # Build the URL for the OpenAI endpoint
     base_url = f"{OPENAI_COMPLETIONS_ENDPOINT}/openai/deployments/{OPENAI_COMPLETIONS_MODEL}/chat/completions?api-version=2025-01-01-preview"
-    if not OPENAI_COMPLETIONS_ENDPOINT:
+    if not OPENAI_COMPLETIONS_KEY:
         # Get token for Azure OpenAI
         token = credential.get_token("https://cognitiveservices.azure.com/.default").token
         headers = {
@@ -100,7 +100,7 @@ def agent_detection(text):
         token = OPENAI_COMPLETIONS_KEY
         headers = {
             "Content-Type": "application/json", 
-            "api_key": token
+            "api-key": token
         }
             
     parsed_url = urllib.parse.urlparse(base_url)
