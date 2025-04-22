@@ -1,16 +1,16 @@
 # Transcript Function Speech to Text
 
-This is a Python Azure Function that convert audio files from Azure Blob Storage to text using Azure Speech Service.
+This is a Python Azure Function designed to convert audio files from Azure Blob Storage to text using Azure Speech Service. It is particularly useful for automating transcription workflows, processing large volumes of audio data, and enabling redaction of sensitive information in transcripts for compliance or privacy purposes.
 
-Then the results are sent to OpenAI for redaction and the redacted results are stored in Azure Blob Storage.
+Then the results are sent to OpenAI for redaction, such as removing Personally Identifiable Information (PII) or masking sensitive data, and the redacted results are stored in Azure Blob Storage.
 
-![Audio transcription/redact](docs/architecture.png)
+![Diagram showing the architecture of audio transcription and redaction](docs/architecture.png)
 
 ## Prerequisites
 
 - Python 3.11.9 or later
-- Azure Functions Core Tools
-- Azure CLI
+- Azure Functions Core Tools (version 4.x or later)
+- Azure CLI (version 2.45.0 or later)
 - Azure Speech Service
 - Azure Function App
 
@@ -62,7 +62,7 @@ The Bicep template automatically:
 
 1. Creates a single storage account that serves both recordings and redacted storage purposes
 2. Creates all required containers (`audio-recordings`, `transcriptions`, and `redacted-transcriptions`)
-3. **Generates a SAS token** for blob access using the built-in `listAccountSas` function
+3. **Generates a SAS token** (a Shared Access Signature token that provides secure delegated access to resources in your Azure Storage account) for blob access using the built-in `listAccountSas` function
 4. Sets up Application Insights for monitoring
 5. Deploys a Function App with a consumption plan
 6. Configures all required environment variables including the auto-generated SAS token
@@ -107,7 +107,7 @@ The following environment variables are required for the Azure Function App to r
 
 ```text
 AzureWebJobsStorage__accountName = "STORAGE ACCOUNT NAME WITHOUT .blob.core.windows.net"
-AzureWebJobsStorage__credential = "managedidentity" #exactly as it is
+AzureWebJobsStorage__credential = "managedidentity" # This value enables the use of Azure Managed Identity for secure access to storage resources
 IngestAccount__blobServiceUri = "https://YOUR_STORAGE_ACCOUNT_NAME.blob.core.windows.net" # This is the storage account used by the function itself, the name IngestAccount is the connection string name used in the code
 SCM_DO_BUILD_DURING_DEPLOYMENT = "1" # This is required to run the function in Azure Function App
 ENABLE_ORYX_BUILD = "true" # This is required to run the function in Azure Function App
@@ -119,12 +119,12 @@ BUILD_FLAGS = "UseExpressBuild"
 
 The function needs to have the following permissions on the storage accounts:
 
-- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code)
-- `Storage Blob Data Owner` on the storage account used by the function itself (IngestAccount in the code)
-- `Cognitive Services OpenAI Contributor` on the OpenAI service used for redaction (Completions in the code)
-- `Cognitive Services User` on the OpenAI service used for redaction (Completions in the code)
-- `Cognitive Services OpenAI User` on the OpenAI service used for redaction (Completions in the code)
+- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code): Required to allow the function to read and write blobs in the storage account.
+- `Storage Blob Data Owner` on the storage account used by the function itself (IngestAccount in the code): Grants full control over blob data, including setting permissions and managing access.
+- `Cognitive Services OpenAI Contributor` on the OpenAI service used for redaction (Completions in the code): Enables the function to manage the OpenAI service and its configurations.
+- `Cognitive Services User` on the OpenAI service used for redaction (Completions in the code): Allows the function to access and use the OpenAI service for processing.
+- `Cognitive Services OpenAI User` on the OpenAI service used for redaction (Completions in the code): Provides access to specific OpenAI resources for redaction tasks.
 
-The Speech Service needs to have the following permissions on the storage account used by the function itself (IngestAccount in the code):
+The Speech Service needs to have the following permissions on the storage account used by the function itself (IngestAccount in the code) to ensure it can properly process and store transcription results:
 
-- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code)
+- `Storage Blob Data Contributor` on the storage account used by the function itself (IngestAccount in the code): Required for the Speech Service to read and write transcription results to the storage account.
